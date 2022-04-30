@@ -6,7 +6,7 @@ const app = express()
 const expressLayouts = require('express-ejs-layouts')
 
 
-require('dotenv').config()
+require('dotenv').config({path: __dirname + '/.env'})
 const PORT = process.env.PORT || 5000;
 require('./config/database.js')
 require('./config/userModel.js')
