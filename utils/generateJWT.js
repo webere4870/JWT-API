@@ -46,21 +46,27 @@ function generateJWT(user, privateKey)
 
 async function validateRefresh(req, res, next)
 {
-    const refreshToken = req.cookies
-    let response = jsonwebtoken.verify(refreshToken.refresh, refreshPublic)
+    try{
+        const refreshToken = req.cookies
+        let response = jsonwebtoken.verify(refreshToken.refresh, refreshPublic)
 
-    if(response.exp > Date.now())
+        if(response.exp > Date.now())
+        {
+            console.log("valid")
+            let user = await User.findById(response.sub)
+            let refreshToken = generateJWT(user, refreshPrivate)
+            res.cookie("refresh", refreshToken.token, {httpOnly: true, maxAge: 1000000})
+        }
+        else{
+            console.log("invalid")
+            res.clearCookie("refresh")
+        }
+        next()
+    }
+    catch(err)
     {
-        console.log("valid")
-        let user = await User.findById(response.sub)
-        let refreshToken = generateJWT(user, refreshPrivate)
-        res.cookie("refresh", refreshToken.token, {httpOnly: true, maxAge: 1000000})
+        res.render('login')
     }
-    else{
-        console.log("invalid")
-        res.clearCookie("refresh")
-    }
-    next()
 }
 
 module.exports = {validatePassword, generateDatabaseRecord, generateJWT, validateRefresh}

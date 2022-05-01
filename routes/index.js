@@ -23,7 +23,12 @@ router.get('/', (req, res)=>
     res.render('index')
 })
 
-router.get('/login', async (req, res)=>
+router.get('/login', (req, res)=>
+{
+    res.render('login')
+})
+
+router.post('/login', async (req, res)=>
 {
     const {username, password} = req.body
     User.findOne({username: username}).then((user)=>
@@ -32,7 +37,13 @@ router.get('/login', async (req, res)=>
         console.log(valid)
         if(valid == true)
         {
-            res.json({success: true})
+            const tokenObject = generateJWT(user, privateKey)
+            const temp = "Bearer " + tokenObject.token
+            tokenObject.token = temp 
+            const refreshToken = generateJWT(user, refreshPrivate)
+            console.log(tokenObject, refreshToken)
+            res.cookie("refresh", refreshToken.token, {httpOnly: true, maxAge: 1000000})
+            res.json({token: tokenObject.token, expires: tokenObject.expires})
         }
         else
         {
@@ -57,14 +68,8 @@ router.post('/register', async (req, res)=>
     User.create(userRecord).then((user)=>
     {
         console.log(user)
-        const tokenObject = generateJWT(user, privateKey)
-        const temp = "Bearer " + tokenObject.token
-        tokenObject.token = temp 
-        const refreshToken = generateJWT(user, refreshPrivate)
-        console.log(tokenObject, refreshToken)
-        res.cookie("refresh", refreshToken.token, {httpOnly: true, maxAge: 1000000})
-        res.json({token: tokenObject.token, expires: tokenObject.expires})
     })
+    res.render('login')
 })
 
 module.exports = router
